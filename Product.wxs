@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?define CustomAction_TargetDir=$(var.CustomAction.TargetDir)?>
+	<Product Id="*" Name="SetupProject1" Language="1033" Version="1.0.0.0" Manufacturer="Test Manufacturer" UpgradeCode="23680840-9530-4c52-8503-0d6b891f65f1">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <Property Id="WINDOWSBUILDNUM" Secure="yes">
+      <RegistrySearch Id="YOUR_ID_HERE" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuild" Type="raw" />
+    </Property>
+
+    <Property Id="WIN10FOUND">
+      <DirectorySearch Id="searchSystem" Path="[SystemFolder]" Depth="0">
+        <FileSearch Id="searchFile" Name="advapi32.dll" MinVersion="6.3.10000.0"/>
+      </DirectorySearch>
+    </Property>
+
+    <!-- 
+    >> cmd
+    >> wmic os get Name,Version,BuildNumber /VALUE
+    
+    501 for Windows XP
+    502 for Windows Server 2003
+    600 for Windows Vista and Windows Server 2008
+    601 for Windows 7 and Windows Server 2008 R2
+    602 for Windows 8 and Windows Server 2012
+    603 for Windows 8.1 and Windows Server 2012 R2
+    1000 for Windows 10 and Windows Server 2016
+    
+    By default, Windows 10 sets the VersionNT property to 603. But to differentiate from Windows 8.1 all the MSI packages built with Advanced Installer reset its value to 1000.
+
+
+    OS	32-bit	64-bit
+    Windows XP	VersionNT = 501	VersionNT64 = 502
+    Windows Server 2003	VersionNT = 502	VersionNT64 = 502
+    Windows Vista	VersionNT = 600 AND MsiNTProductType = 1	VersionNT64 = 600 AND MsiNTProductType = 1
+    Windows Server 2008	VersionNT = 600 AND MsiNTProductType <> 1	VersionNT64 = 600 AND MsiNTProductType <> 1
+    Windows 7	VersionNT = 601 AND MsiNTProductType = 1	VersionNT64 = 601 AND MsiNTProductType = 1
+    Windows Server 2008 R2	-	VersionNT64 = 601 AND MsiNTProductType <> 1
+    Windows 8	VersionNT = 601 AND MsiNTProductType = 1	VersionNT64 = 601 AND MsiNTProductType = 1
+    Windows Server 2012	-	VersionNT64 = 602 AND MsiNTProductType <> 1
+    Windows 8.1	VersionNT = 603 AND MsiNTProductType = 1	VersionNT64 = 603 AND MsiNTProductType = 1
+    Windows Server 2012 R2	-	VersionNT64 = 603 AND MsiNTProductType <> 1
+    Windows 10	VersionNT = 1000 AND MsNTProductType = 1	VersionNT64 = 1000 AND MsiNTProductType = 1
+    Windows Server 2016	-	VersionNT64 = 1000 AND MsiNTProductType <> 1
+
+
+    -->
+    
+    <!--Define custom action binary files-->
+    <Binary Id="CustomAction.CA.dll" SourceFile="$(var.CustomAction_TargetDir)CustomAction.CA.dll" />
+
+    <!--Define custom action which can invoke GUI-->
+    <CustomAction Id="CustomActionInstall" Return="check" Execute="immediate" BinaryKey="CustomAction.CA.dll" DllEntry="TestAction" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CustomActionInstall" Before="InstallFinalize">NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+    <!--<Condition Message="This application is only supported on Windows Vista, Windows Server 2008, or higher.">
+      <![CDATA[(VersionNT >= 600)]]>
+    </Condition>
+
+    <Condition Message="This application requires .NET Framework 2.0. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR NETFRAMEWORK20]]>
+    </Condition>-->
+    
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate />
+
+		<Feature Id="ProductFeature" Title="SetupProject1" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="SetupProject1" />
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
+			<!-- <Component Id="ProductComponent"> -->
+				<!-- TODO: Insert files, registry keys, and other resources here. -->
+			<!-- </Component> -->
+      
+      <!--Having got a value one can handle it like this, in order to install a specific for Windows 10 file:-->
+			<Component Id="CustomAction.dll" Guid="894368a9-f95f-4c82-a449-35a8ed78d662">
+        <Condition><![CDATA[Installed OR (WINDOWSBUILDNUM > 9999)]]></Condition>
+			  <File Id="CustomAction.dll" Name="CustomAction.dll" Source="$(var.CustomAction_TargetDir)CustomAction.dll" />
+			</Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>

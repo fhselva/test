@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
+     xmlns:netfx='http://schemas.microsoft.com/wix/NetFxExtension'>
+
+  <Bundle Name="IPDev" Version="0.6" Manufacturer="MYAPP Corporation" UpgradeCode="f380ae43-5df1-4cfe-9297-526e3e638e57">
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+    <Chain>
+      <!-- TODO: Define the list of chained packages. -->
+      <PackageGroupRef Id="Netfx45FullPackage"/>
+    </Chain>
+  </Bundle>
+  <Fragment>
+
+    <util:RegistrySearch Root="HKLM"
+        Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+        Value="Version"
+        Variable="NETFX46VERSION" />
+    
+    <PackageGroup Id="Netfx45FullPackage">
+      <ExePackage Id="Netfx45Xxx" Cache="no" Compressed="no" PerMachine="yes" Permanent="yes" Vital="no" InstallCommand="/q"
+         SourceFile="NDP46-KB3045557-x86-x64-AllOS-ENU.exe"
+         DetectCondition="NETFX46VERSION AND (NETFX46VERSION &gt;= 4.8.04084)" InstallCondition="NOT NETFX46VERSION OR (NETFX46VERSION &lt; 4.8.04084)" />
+    </PackageGroup>
+  </Fragment>
+</Wix>
